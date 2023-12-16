@@ -99,6 +99,9 @@ struct IndenexReg16AddrOffset {
   const int8_t m_offset;
   IndenexReg16AddrOffset(const IndexReg16& reg16, int8_t offset)
       : m_reg(reg16), m_offset(offset) {}
+  uint8_t getOffset(void) const {
+    return static_cast<uint8_t>(m_offset);
+  }
 };
 
 struct IndenexReg16Addr {
@@ -955,7 +958,7 @@ class Generator {
   void ld(const BasicReg8& r, const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r,r") % "LD" % r % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b01, r, F),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   /// LD (HL), r | mem[HL] <- reg8
@@ -968,7 +971,7 @@ class Generator {
   void ld(const IndenexReg16AddrOffset& ireg16_offset, const BasicReg8& r) {
     append(Fmt("i r,r") % "LD" % ireg16_offset % r,  //
            {ireg16_offset.m_reg.m_prefix, build(0b01, F, r),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   /// LD (HL), r | mem[HL] <- constant8
@@ -981,7 +984,7 @@ class Generator {
   void ld(const IndenexReg16AddrOffset& ireg16_offset, uint8_t n) {
     append(Fmt("i r,x") % "LD" % ireg16_offset % n,  //
            {ireg16_offset.m_reg.m_prefix, build(0b00, F, F),
-            static_cast<uint8_t>(ireg16_offset.m_offset), n});
+            ireg16_offset.getOffset(), n});
   }
 
   /// LD A, (BC or DE) | A <- mem[BC or DE]
@@ -1275,7 +1278,7 @@ class Generator {
   void rlc(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "RLC" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset), 0b0000'0110});
+            ireg16_offset.getOffset(), 0b0000'0110});
   }
 
   /// RL r |
@@ -1294,7 +1297,7 @@ class Generator {
   void rl(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "RL" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset), 0b0001'0110});
+            ireg16_offset.getOffset(), 0b0001'0110});
   }
 
   // ---------------------------------
@@ -1328,7 +1331,7 @@ class Generator {
   void rrc(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "RRC" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset), build(0b00, C, F)});
+            ireg16_offset.getOffset(), build(0b00, C, F)});
   }
 
   /// RR r |
@@ -1347,7 +1350,7 @@ class Generator {
   void rr(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "RR" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset), build(0b00, E, F)});
+            ireg16_offset.getOffset(), build(0b00, E, F)});
   }
 
   // ---------------------------------
@@ -1369,7 +1372,7 @@ class Generator {
   void sla(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "SLA" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset), build(0b00, H, F)});
+            ireg16_offset.getOffset(), build(0b00, H, F)});
   }
 
   // ---------------------------------
@@ -1391,7 +1394,7 @@ class Generator {
   void sra(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "SRA" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset), build(0b00, L, F)});
+            ireg16_offset.getOffset(), build(0b00, L, F)});
   }
 
   /// SRL r |
@@ -1409,7 +1412,7 @@ class Generator {
   void srl(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "SRL" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset), build(0b00, A, F)});
+            ireg16_offset.getOffset(), build(0b00, A, F)});
   }
 
   // =========================================================================
@@ -1440,7 +1443,7 @@ class Generator {
   void add(const RegA& a, const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r,r") % "ADD" % a % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b10, B, F),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   /// ADC A, r | A <- A + reg8 + carry
@@ -1465,7 +1468,7 @@ class Generator {
   void adc(const RegA& a, const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r,r") % "ADC" % a % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b10, C, F),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   /// INC r | reg8 <- reg8 + 1
@@ -1484,7 +1487,7 @@ class Generator {
   void inc(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "INC" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b00, F, H),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   // ---------------------------------
@@ -1512,7 +1515,7 @@ class Generator {
   void sub(const RegA& a, const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r,r") % "SUB" % a % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b10, D, F),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   /// SBC A, r | A <- A - reg8 - carry
@@ -1537,7 +1540,7 @@ class Generator {
   void sbc(const RegA& a, const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r,r") % "SBC" % a % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b10, E, F),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   /// DEC r | reg8 <- reg8 - 1
@@ -1556,7 +1559,7 @@ class Generator {
   void dec(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "DEC" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b00, F, L),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   // =========================================================================
@@ -1665,7 +1668,7 @@ class Generator {
   void and (const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "AND" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b10, H, F),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   /// OR r | A <- A | reg8
@@ -1690,7 +1693,7 @@ class Generator {
   void or (const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "OR" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b10, F, F),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
 #define XZ80_XOR xor
@@ -1717,7 +1720,7 @@ class Generator {
   void XZ80_XOR(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "XOR" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, build(0b10, L, F),
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   /// CPL | A <- ~A
@@ -1778,7 +1781,7 @@ class Generator {
     }
     append(Fmt("i d,r") % "BIT" % b % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset),
+            ireg16_offset.getOffset(),
             static_cast<uint8_t>(0b0100'0000 | b << 3 | 0b110)});
   }
 
@@ -1813,7 +1816,7 @@ class Generator {
     }
     append(Fmt("i d,r") % "SET" % b % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset),
+            ireg16_offset.getOffset(),
             static_cast<uint8_t>(0b1100'0000 | b << 3 | 0b110)});
   }
 
@@ -1848,7 +1851,7 @@ class Generator {
     }
     append(Fmt("i d,r") % "RES" % b % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1100'1011,
-            static_cast<uint8_t>(ireg16_offset.m_offset),
+            ireg16_offset.getOffset(),
             static_cast<uint8_t>(0b1000'0000 | b << 3 | 0b110)});
   }
 
@@ -1901,7 +1904,7 @@ class Generator {
   void cp(const IndenexReg16AddrOffset& ireg16_offset) {
     append(Fmt("i r") % "CP" % ireg16_offset,  //
            {ireg16_offset.m_reg.m_prefix, 0b1011'1110,
-            static_cast<uint8_t>(ireg16_offset.m_offset)});
+            ireg16_offset.getOffset()});
   }
 
   // =========================================================================
