@@ -4,6 +4,18 @@ class Gen : public Xz80::Generator {
  public:
   Gen() : Xz80::Generator(0x0100) {}
   void testcase(void) {
+    // 内部処理用クラスのテスト
+    Xz80::Formatter::Formatter f("漢字ir,r,r,r,r,r,r,r,r,");
+    std::cout << (f % ";" % A % C() % HL % HL() % BC() % DE() % IX() % SP() % IY(0)).str() << std::endl;
+
+    Xz80::Formatter::Formatter g("idxdx");
+    std::cout << (g % ";" % 42 % 42 % -1 % -1).str() << std::endl;
+
+    Xz80::Formatter::Formatter h("ib,w");
+    std::initializer_list<uint8_t> bs{0xde, 0xad, 0xbe, 0xef};
+    std::initializer_list<uint16_t> ws{0xdead, 0xbeef, 0xcafe, 0xbabe};
+    std::cout << (h % ";" % bs % ws).str() << std::endl;
+
     l("HEAD");
     ld(A, B);
     ld(C, 64);
@@ -27,7 +39,7 @@ class Gen : public Xz80::Generator {
     ld(A, mem(0xbeef));
     ld(BC(), A);
     ld(DE(), A);
-    ld(A, mem(0xcafe));
+    ld(mem(0xcafe), A);
     ld(A, I);
     ld(I, A);
     ld(A, R);
@@ -365,7 +377,6 @@ class Gen : public Xz80::Generator {
     cp(IX(0));
     cp(IY(-42));
     // ----
-    return;
     l("JP0");
     jp(0xbeef);
     l("JP1");
@@ -488,6 +499,7 @@ class Gen : public Xz80::Generator {
     dw({"LABEL1", "LABEL2", "LABEL3"});
     db({0xcd, 0xf7, 0xf8});
     dw({0x1234, 0x5678, 0xcc33});
+    db("Hello!\r\n");
     // ----
   }
 };
