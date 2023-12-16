@@ -778,6 +778,18 @@ class Generator {
     }
   }
 
+  /// 生成されたコードを std::vector として取得する
+  std::vector<uint8_t> getBytes(void) const {
+    const size_t size = m_curr - m_org;
+    std::vector<uint8_t> bytes;
+    bytes.reserve(size);
+    for (const auto& m : m_mnemonics) {
+      const auto& bs = m.getBytes();
+      bytes.insert(bytes.end(), bs.begin(), bs.end());
+    }
+    return bytes;
+  }
+
   /// 生成されたコードをベタ形式でファイルに保存する
   void save(const char* fn) const {
     FILE* fp = fopen(fn, "wb");
@@ -789,7 +801,7 @@ class Generator {
   }
 
   /// 生成されたコードをMSXのBSAVE形式でファイルに保存する
-  void bsave(const char* fn, uint16_t start_addr = 0x0000) {
+  void bsave(const char* fn, uint16_t start_addr = 0x0000) const {
     FILE* fp = fopen(fn, "wb");
     const auto wb = [&](uint8_t val)  // WriteByte
     { std::fwrite(&val, 1, 1, fp); };
@@ -809,6 +821,112 @@ class Generator {
     for (const auto& m : m_mnemonics) {
       const auto& bs = m.getBytes();
       std::fwrite(bs.data(), 1, bs.size(), fp);
+    }
+
+    fclose(fp);
+  }
+
+  /// Intel HEX 形式でファイルに保存する
+  /// @param fn ファイル名
+  /// @param bpr 1行当たりの最大出力バイト数(Bytes Par Row)
+  void hex(const char* fn, const uint8_t bpr = 16) const {
+    FILE* fp = fopen(fn, "wb");
+    const size_t size = m_curr - m_org;
+
+    // バイト列の取得
+    std::vector<uint8_t> bytes = getBytes();
+
+    /// bpr バイト毎に出力
+    for (size_t i = 0; i < size; i += bpr) {
+      const size_t end = std::min(size, i + bpr);
+      const size_t num = end - i;
+      const auto addr = MemAddr(m_org + i);
+
+      std::vector<uint8_t> buf;
+      buf.push_back(num);
+      buf.push_back(addr.h);
+      buf.push_back(addr.l);
+      buf.push_back(0);
+      buf.insert(buf.end(), bytes.begin() + i, bytes.begin() + end);
+
+      // チェックサム
+      uint8_t cs = 0;
+      for (const uint8_t e : buf) {
+        cs += e;
+      }
+      buf.push_back(static_cast<uint8_t>(256 - cs));
+
+      std::fputc(':', fp);
+      for (const uint8_t e : buf) {
+        std::fprintf(fp, "%02X", e);
+      }
+      std::fprintf(fp, "\r\n");
+    }
+    fprintf(fp, ":00000001FF\r\n");
+    fclose(fp);
+  }
+
+  /// Motorola S-record 形式でファイルに保存する
+  /// @param fn ファイル名
+  /// @param start_addr 実行開始アドレス
+  /// @param bpr 1行当たりの最大出力バイト数(Bytes Par Row)
+  void mot(const char* fn, uint16_t start_addr = 0, const uint8_t bpr = 16) const {
+    FILE* fp = fopen(fn, "wb");
+    const size_t size = m_curr - m_org;
+
+    // バイト列にチェックサムを追加して出力するラムダ式
+    const auto write_row = [&](const char* type, const std::vector<uint8_t>& bs) {
+      std::fprintf(fp, "%s", type);
+      uint8_t cs = 0;
+      for (const uint8_t e : bs) {
+        cs += e;
+        std::fprintf(fp, "%02X", e);
+      }
+      std::fprintf(fp, "%02X\r\n", 0xff & (~cs));
+    };
+
+    {  // S0レコードの出力
+      std::vector<uint8_t> s0;
+      std::string msg(fn);
+      msg += "|XZ80";
+      s0.push_back(msg.size() + 4);
+      s0.push_back(0);
+      s0.push_back(0);
+      const uint8_t* p = reinterpret_cast<const uint8_t*>(msg.c_str());
+      s0.insert(s0.end(), p, p + msg.size());
+      s0.push_back(0);
+      write_row("S0", s0);
+    }
+
+    // バイト列の取得
+    std::vector<uint8_t> bytes = getBytes();
+
+    /// bpr バイト毎に出力
+    size_t numRow = 0;
+    for (size_t i = 0; i < size; i += bpr) {
+      const size_t end = std::min(size, i + bpr);
+      const size_t num = end - i;
+      const auto addr = MemAddr(m_org + i);
+
+      std::vector<uint8_t> buf;
+      buf.push_back(num + 3);
+      buf.push_back(addr.h);
+      buf.push_back(addr.l);
+      buf.insert(buf.end(), bytes.begin() + i, bytes.begin() + end);
+      write_row("S1", buf);
+      ++numRow;
+    }
+
+    {  // S5レコードの出力
+      MemAddr nr(numRow);
+      std::vector<uint8_t> s5{3, nr.h, nr.l};
+      write_row("S5", s5);
+    }
+
+    {  // S9レコードの出力
+      MemAddr ad(start_addr);
+      std::vector<uint8_t> s9{3, ad.h, ad.l};
+      write_row("S9", s9);
     }
 
     fclose(fp);
