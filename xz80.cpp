@@ -511,4 +511,6 @@ int main(void) {
   g.dump();
 
   g.save("exp.bin");
+  g.hex("exp.hex");
+  g.mot("exp.mot");
 }
